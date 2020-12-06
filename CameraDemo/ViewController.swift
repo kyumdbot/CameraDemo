@@ -38,11 +38,15 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
     var videoSession : AVCaptureSession!
     
     let detectModes : Array<DetectMode> = [.none, .face, .object]
-    let faceMasks : Array<FaceMask> = [.rectangle, .emoji]
-    
+    var faceMasks = [FaceMask]()
     var faceViews = [NSView]()
     var detectMode = DetectMode.none
     var faceMask = FaceMask.rectangle
+    
+    var faceEmoji = "😊"
+    let faceEmojiArray = ["😊", "☺️", "🥰", "😍", "😉", "😌", "😎",
+                          "🥸", "😱", "🤫", "👺", "🤡", "🎃", "👽"]
+    
     
     
     // MARK: - viewLoad
@@ -110,8 +114,25 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
     
     func setupFaceMasksPopUpButton() {
         faceMasksPopUpButton.removeAllItems()
+        
+        faceMasks.append(.rectangle)
+        for _ in faceEmojiArray {
+            faceMasks.append(.emoji)
+        }
+        
+        var index = -1
         for mask in faceMasks {
-            faceMasksPopUpButton.addItem(withTitle: "\(mask.rawValue)")
+            if index == -1 {
+                // .rectangle
+                faceMasksPopUpButton.addItem(withTitle: "\(mask.rawValue)")
+            } else if index >= 0 {
+                // .emoji
+                if index < faceEmojiArray.count {
+                    let emoji = faceEmojiArray[index]
+                    faceMasksPopUpButton.addItem(withTitle: "\(mask.rawValue)  \(emoji) ")
+                }
+            }
+            index += 1
         }
         faceMasksPopUpButton.isHidden = true
     }
@@ -234,13 +255,17 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
     @IBAction func selectFaceMasksPopUpButton(_ sender: NSPopUpButton) {
         print("\(sender.indexOfSelectedItem) : \(sender.titleOfSelectedItem ?? "")")
         
-        switch sender.indexOfSelectedItem {
-        case 0:
-            faceMask = .rectangle
-        case 1:
-            faceMask = .emoji
-        default:
-            faceMask = .rectangle
+        if sender.indexOfSelectedItem < faceMasks.count {
+            faceMask = faceMasks[sender.indexOfSelectedItem]
+            
+            if faceMask == .emoji {
+                let emojiIndex = sender.indexOfSelectedItem - 1
+                if emojiIndex < faceEmojiArray.count {
+                    faceEmoji = faceEmojiArray[emojiIndex]
+                } else {
+                    faceEmoji = "😊"
+                }
+            }
         }
     }
     
@@ -372,7 +397,7 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
         let font = NSFont.systemFont(ofSize: CGFloat(width - 24))
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = NSGraphicsContext(cgContext: drawingContext, flipped: false)
-        NSString(string: String("😊")).draw(in: targetRect, withAttributes: [.font: font])
+        NSString(string: faceEmoji).draw(in: targetRect, withAttributes: [.font: font])
         NSGraphicsContext.restoreGraphicsState()
         if let coreImage = drawingContext.makeImage() {
             return NSImage(cgImage: coreImage, size: imageSize)
