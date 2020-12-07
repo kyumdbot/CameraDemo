@@ -163,7 +163,7 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
         currentCameraDevice = device
         
         videoSession = AVCaptureSession()
-        videoSession.sessionPreset = AVCaptureSession.Preset.photo
+        videoSession.sessionPreset = AVCaptureSession.Preset.vga640x480
         previewLayer = AVCaptureVideoPreviewLayer(session: videoSession)
         previewLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
         
