@@ -11,6 +11,7 @@
 		255D6C3D2578C0E000E511D9 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 255D6C3C2578C0E000E511D9 /* ViewController.swift */; };
 		255D6C3F2578C0E100E511D9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 255D6C3E2578C0E100E511D9 /* Assets.xcassets */; };
 		255D6C422578C0E100E511D9 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 255D6C402578C0E100E511D9 /* Main.storyboard */; };
+		255D6C56257DD58A00E511D9 /* YOLOv3TinyFP16.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = 255D6C55257DD58A00E511D9 /* YOLOv3TinyFP16.mlmodel */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -21,6 +22,7 @@
 		255D6C412578C0E100E511D9 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		255D6C432578C0E100E511D9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		255D6C442578C0E100E511D9 /* CameraDemo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CameraDemo.entitlements; sourceTree = "<group>"; };
+		255D6C55257DD58A00E511D9 /* YOLOv3TinyFP16.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = YOLOv3TinyFP16.mlmodel; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -53,7 +55,7 @@
 		255D6C392578C0E000E511D9 /* CameraDemo */ = {
 			isa = PBXGroup;
 			children = (
-				255D6C51257A944E00E511D9 /* images */,
+				255D6C54257DD4EC00E511D9 /* model */,
 				255D6C3A2578C0E000E511D9 /* AppDelegate.swift */,
 				255D6C3C2578C0E000E511D9 /* ViewController.swift */,
 				255D6C3E2578C0E100E511D9 /* Assets.xcassets */,
@@ -64,11 +66,12 @@
 			path = CameraDemo;
 			sourceTree = "<group>";
 		};
-		255D6C51257A944E00E511D9 /* images */ = {
+		255D6C54257DD4EC00E511D9 /* model */ = {
 			isa = PBXGroup;
 			children = (
+				255D6C55257DD58A00E511D9 /* YOLOv3TinyFP16.mlmodel */,
 			);
-			path = images;
+			path = model;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -141,6 +144,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				255D6C3D2578C0E000E511D9 /* ViewController.swift in Sources */,
+				255D6C56257DD58A00E511D9 /* YOLOv3TinyFP16.mlmodel in Sources */,
 				255D6C3B2578C0E000E511D9 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
