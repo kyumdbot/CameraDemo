@@ -5,8 +5,9 @@
 - 使用 Vision framework 做人臉檢測。
 - 使用 YOLOv3-Tiny 做 Object 檢測。
 
+<br>
 
-## App 擷圖
+## 擷圖
 
 ### 人臉檢測，並加上 Emoji：
 ![face](imgs/img01.png)
