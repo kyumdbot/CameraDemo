@@ -39,14 +39,15 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
     
     let detectModes : Array<DetectMode> = [.none, .face, .object]
     var faceMasks = [FaceMask]()
-    var faceViews = [NSView]()
     var detectMode = DetectMode.none
     var faceMask = FaceMask.rectangle
-    
     var faceEmoji = "😊"
     let faceEmojiArray = ["😊", "☺️", "🥰", "😍", "😉", "😌", "😎",
                           "🥸", "😱", "🤫", "👺", "🤡", "🎃", "👽"]
     
+    
+    var objectViews = [NSView]()
+    var objectRecognitionRequests = [VNRequest]()
     
     
     // MARK: - viewLoad
@@ -65,6 +66,9 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
         // setup UI Components
         setupDetectModePopUpButton()
         setupFaceMasksPopUpButton()
+        
+        // setup CoreML Model
+        setupObjectDetectionModel()
     }
 
     override var representedObject: Any? {
@@ -75,6 +79,12 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
     
     
     // MARK: - Setup
+    
+    func hideVideoMirrorComponents() {
+        videoMirrorSwitch.state = .off
+        videoMirrorSwitch.isHidden = true
+        videoMirrorLabel.isHidden = true
+    }
     
     func setupCamerasPopUpButton() {
         camerasPopUpButton.removeAllItems()
@@ -135,12 +145,6 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
             index += 1
         }
         faceMasksPopUpButton.isHidden = true
-    }
-    
-    func hideVideoMirrorComponents() {
-        videoMirrorSwitch.state = .off
-        videoMirrorSwitch.isHidden = true
-        videoMirrorLabel.isHidden = true
     }
     
     
@@ -204,7 +208,6 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
         
         if videoSession.canAddOutput(videoOutput) {
             videoSession.addOutput(videoOutput)
-            
         }
         return true
     }
@@ -246,11 +249,13 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
         
         if sender.indexOfSelectedItem < detectModes.count {
             detectMode = detectModes[sender.indexOfSelectedItem]
+            faceMasksPopUpButton.isHidden = (detectMode == .face) ? false : true
             
-            if detectMode == .face {
-                faceMasksPopUpButton.isHidden = false
-            } else {
-                faceMasksPopUpButton.isHidden = true
+            switch detectMode {
+            case .object:
+                break
+            default:
+                break
             }
         }
     }
@@ -311,11 +316,12 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
     {
         switch detectMode {
         case .none:
-            DispatchQueue.main.async { self.removeAllFaceViews() }
+            DispatchQueue.main.async { self.removeAllObjectViews() }
         case .face:
             faceDetection(sampleBuffer: sampleBuffer)
         case .object:
-            DispatchQueue.main.async { self.removeAllFaceViews() }
+            DispatchQueue.main.async { self.removeAllObjectViews() }
+            objectDetection(sampleBuffer: sampleBuffer)
         }
     }
     
@@ -349,7 +355,7 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
         }
         
         DispatchQueue.main.async {
-            self.removeAllFaceViews()
+            self.removeAllObjectViews()
             self.drawFaces(observations)
         }
     }
@@ -362,27 +368,27 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
             
             switch faceMask {
             case .rectangle:
-                let faceView = NSView(frame: facebounds)
-                faceView.wantsLayer = true
-                faceView.layer?.backgroundColor = NSColor(red: 1, green: 45/255, blue: 45/255, alpha: 0.4).cgColor
-                faceViews.append(faceView)
-                self.view.addSubview(faceView)
+                let view = NSView(frame: facebounds)
+                view.wantsLayer = true
+                view.layer?.backgroundColor = NSColor(red: 1, green: 45/255, blue: 45/255, alpha: 0.4).cgColor
+                objectViews.append(view)
+                self.view.addSubview(view)
             case .emoji:
-                let faceView = NSImageView(frame: facebounds)
-                faceView.image = emojiImage()
-                faceViews.append(faceView)
-                self.view.addSubview(faceView)
+                let view = NSImageView(frame: facebounds)
+                view.image = emojiImage()
+                objectViews.append(view)
+                self.view.addSubview(view)
             }
         }
     }
     
-    func removeAllFaceViews() {
-        if faceViews.count <= 0 { return }
+    func removeAllObjectViews() {
+        if objectViews.count <= 0 { return }
         
-        for faceView in faceViews {
-            faceView.removeFromSuperview()
+        for view in objectViews {
+            view.removeFromSuperview()
         }
-        faceViews.removeAll()
+        objectViews.removeAll()
     }
     
     func emojiImage(width: Int = 512, height: Int = 512) -> NSImage? {
@@ -406,6 +412,81 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
             return NSImage(cgImage: coreImage, size: imageSize)
         }
         return nil
+    }
+    
+    
+    // MARK: - Object Detection
+    
+    func setupObjectDetectionModel() {
+        //
+        // YOLOv3TinyFP16.mlmodel :
+        //   Storing model weights using half-precision (16 bit) floating point numbers.
+        //
+        guard let modelURL = Bundle.main.url(forResource: "YOLOv3TinyFP16", withExtension: "mlmodelc") else {
+            print(">> Model file is missing")
+            return
+        }
+        
+        do {
+            let model = try VNCoreMLModel(for: MLModel(contentsOf: modelURL))
+            let objectRecognition = VNCoreMLRequest(model: model, completionHandler: { (request, error) in
+                DispatchQueue.main.async {
+                    self.removeAllObjectViews()
+                    if let results = request.results {
+                        self.drawObjects(results)
+                    }
+                }
+            })
+            self.objectRecognitionRequests = [objectRecognition]
+            
+        } catch let error as NSError {
+            print("Model loading went wrong: \(error)")
+        }
+    }
+    
+    func objectDetection(sampleBuffer: CMSampleBuffer) {
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
+            print("Failed to obtain a CVPixelBuffer for the current output frame.")
+            return
+        }
+        
+        let imageRequestHandler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
+        
+        do {
+            try imageRequestHandler.perform(self.objectRecognitionRequests)
+        } catch {
+            print(error)
+        }
+    }
+    
+    func drawObjects(_ objectObservations: [Any]) {
+//        print(objectObservations)
+        
+        for observation in objectObservations where observation is VNRecognizedObjectObservation {
+            guard let objectObservation = observation as? VNRecognizedObjectObservation else {
+                continue
+            }
+            
+            let topLabelObservation = objectObservation.labels[0]
+            print("topLabelObservation: \(topLabelObservation)")
+            let objectBounds = previewLayer.layerRectConverted(fromMetadataOutputRect: objectObservation.boundingBox)
+            
+            let view = NSView(frame: objectBounds)
+            view.wantsLayer = true
+            view.layer?.backgroundColor = NSColor(red: 1, green: 211/255, blue: 6/255, alpha: 0.5).cgColor
+            
+            let name = topLabelObservation.identifier.prefix(1).uppercased() + topLabelObservation.identifier.dropFirst()
+            let confidence = String(format: "%.2f", topLabelObservation.confidence)
+            
+            let textLabel = NSTextField(labelWithString: "\(name)\n\(confidence)")
+            textLabel.textColor = NSColor.blue
+            textLabel.font = NSFont.systemFont(ofSize: 18)
+            textLabel.frame = view.bounds
+            view.addSubview(textLabel)
+            
+            objectViews.append(view)
+            self.view.addSubview(view)
+        }
     }
     
 }
