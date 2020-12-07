@@ -467,9 +467,9 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
             }
             
             let topLabelObservation = objectObservation.labels[0]
-            print("topLabelObservation: \(topLabelObservation)")
-            let objectBounds = previewLayer.layerRectConverted(fromMetadataOutputRect: objectObservation.boundingBox)
+            //print("topLabelObservation: \(topLabelObservation)")
             
+            let objectBounds = previewLayer.layerRectConverted(fromMetadataOutputRect: objectObservation.boundingBox)
             let view = NSView(frame: objectBounds)
             view.wantsLayer = true
             view.layer?.backgroundColor = NSColor(red: 1, green: 211/255, blue: 6/255, alpha: 0.5).cgColor
