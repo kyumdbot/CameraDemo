@@ -320,7 +320,6 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
         case .face:
             faceDetection(sampleBuffer: sampleBuffer)
         case .object:
-            DispatchQueue.main.async { self.removeAllObjectViews() }
             objectDetection(sampleBuffer: sampleBuffer)
         }
     }
