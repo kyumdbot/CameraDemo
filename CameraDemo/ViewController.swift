@@ -42,8 +42,8 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
     var detectMode = DetectMode.none
     var faceMask = FaceMask.rectangle
     var faceEmoji = "😊"
-    let faceEmojiArray = ["😊", "☺️", "🥰", "😍", "😉", "😌", "😎",
-                          "🥸", "😱", "🤫", "👺", "🤡", "🎃", "👽"]
+    let faceEmojiArray = ["😊", "☺️", "🥰", "😍", "😉", "😌", "😎", "😷",
+                          "🥸", "😱", "🤫", "👺", "🤡", "🎃", "👽", "👀"]
     
     
     var objectViews = [NSView]()
