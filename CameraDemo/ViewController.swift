@@ -199,9 +199,11 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
             
         let videoOutput = AVCaptureVideoDataOutput()
         videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "sample buffer delegate", attributes: []))
+        videoOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_420YpCbCr8BiPlanarFullRange)]
         
         if videoSession.canAddOutput(videoOutput) {
             videoSession.addOutput(videoOutput)
+            
         }
         return true
     }
