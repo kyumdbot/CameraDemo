@@ -12,7 +12,7 @@ import AVFoundation
 
 class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
     
-    enum FaceMask : String {
+    enum FaceMaskType : String {
         case rectangle = "Rectangle"
         case emoji     = "Emoji"
     }
@@ -38,16 +38,19 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
     var videoSession : AVCaptureSession!
     
     let detectModes : Array<DetectMode> = [.none, .face, .object]
-    var faceMasks = [FaceMask]()
     var detectMode = DetectMode.none
-    var faceMask = FaceMask.rectangle
+    
+    var faceMaskTypeArray = [FaceMaskType]()
+    var faceMaskType = FaceMaskType.rectangle
+    
     var faceEmoji = "😊"
     let faceEmojiArray = ["😊", "☺️", "🥰", "😍", "😉", "😌", "😎", "😷",
                           "🥸", "😱", "🤫", "👺", "🤡", "🎃", "👽", "👀"]
     
     
-    var objectViews = [NSView]()
+    var maskViews = [NSView]()
     var objectRecognitionRequests = [VNRequest]()
+    
     
     
     // MARK: - viewLoad
@@ -125,13 +128,13 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
     func setupFaceMasksPopUpButton() {
         faceMasksPopUpButton.removeAllItems()
         
-        faceMasks.append(.rectangle)
+        faceMaskTypeArray.append(.rectangle)
         for _ in faceEmojiArray {
-            faceMasks.append(.emoji)
+            faceMaskTypeArray.append(.emoji)
         }
         
         var index = -1
-        for mask in faceMasks {
+        for mask in faceMaskTypeArray {
             if index == -1 {
                 // .rectangle
                 faceMasksPopUpButton.addItem(withTitle: "\(mask.rawValue)")
@@ -263,10 +266,10 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
     @IBAction func selectFaceMasksPopUpButton(_ sender: NSPopUpButton) {
         print("\(sender.indexOfSelectedItem) : \(sender.titleOfSelectedItem ?? "")")
         
-        if sender.indexOfSelectedItem < faceMasks.count {
-            faceMask = faceMasks[sender.indexOfSelectedItem]
+        if sender.indexOfSelectedItem < faceMaskTypeArray.count {
+            faceMaskType = faceMaskTypeArray[sender.indexOfSelectedItem]
             
-            if faceMask == .emoji {
+            if faceMaskType == .emoji {
                 let emojiIndex = sender.indexOfSelectedItem - 1
                 if emojiIndex < faceEmojiArray.count {
                     faceEmoji = faceEmojiArray[emojiIndex]
@@ -293,21 +296,6 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
     }
     
     
-    // MARK: - AVCapturePhotoCaptureDelegate
-    
-    /*
-    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        if let err = error {
-            print(err.localizedDescription)
-            return
-        }
-     
-        if let cgImage = photo.cgImageRepresentation() {
-            
-        }
-    }*/
-    
-    
     // MARK: - AVCaptureVideoDataOutputSampleBufferDelegate
     
     func captureOutput(_ output: AVCaptureOutput,
@@ -316,7 +304,7 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
     {
         switch detectMode {
         case .none:
-            DispatchQueue.main.async { self.removeAllObjectViews() }
+            DispatchQueue.main.async { self.removeAllMaskViews() }
         case .face:
             faceDetection(sampleBuffer: sampleBuffer)
         case .object:
@@ -354,7 +342,7 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
         }
         
         DispatchQueue.main.async {
-            self.removeAllObjectViews()
+            self.removeAllMaskViews()
             self.drawFaces(observations)
         }
     }
@@ -363,31 +351,31 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
         //print(faceObservations)
         
         for face in faceObservations {
-            let facebounds = previewLayer.layerRectConverted(fromMetadataOutputRect: face.boundingBox)
+            let faceBounds = previewLayer.layerRectConverted(fromMetadataOutputRect: face.boundingBox)
             
-            switch faceMask {
+            switch faceMaskType {
             case .rectangle:
-                let view = NSView(frame: facebounds)
+                let view = NSView(frame: faceBounds)
                 view.wantsLayer = true
                 view.layer?.backgroundColor = NSColor(red: 1, green: 45/255, blue: 45/255, alpha: 0.4).cgColor
-                objectViews.append(view)
+                maskViews.append(view)
                 self.view.addSubview(view)
             case .emoji:
-                let view = NSImageView(frame: facebounds)
+                let view = NSImageView(frame: faceBounds)
                 view.image = emojiImage()
-                objectViews.append(view)
+                maskViews.append(view)
                 self.view.addSubview(view)
             }
         }
     }
     
-    func removeAllObjectViews() {
-        if objectViews.count <= 0 { return }
+    func removeAllMaskViews() {
+        if maskViews.count <= 0 { return }
         
-        for view in objectViews {
+        for view in maskViews {
             view.removeFromSuperview()
         }
-        objectViews.removeAll()
+        maskViews.removeAll()
     }
     
     func emojiImage(width: Int = 512, height: Int = 512) -> NSImage? {
@@ -430,7 +418,7 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
             let model = try VNCoreMLModel(for: MLModel(contentsOf: modelURL))
             let objectRecognition = VNCoreMLRequest(model: model, completionHandler: { (request, error) in
                 DispatchQueue.main.async {
-                    self.removeAllObjectViews()
+                    self.removeAllMaskViews()
                     if let results = request.results {
                         self.drawObjects(results)
                     }
@@ -459,7 +447,7 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
     }
     
     func drawObjects(_ objectObservations: [Any]) {
-//        print(objectObservations)
+        //print(objectObservations)
         
         for observation in objectObservations where observation is VNRecognizedObjectObservation {
             guard let objectObservation = observation as? VNRecognizedObjectObservation else {
@@ -483,7 +471,7 @@ class ViewController: NSViewController, AVCaptureVideoDataOutputSampleBufferDele
             textLabel.frame = view.bounds
             view.addSubview(textLabel)
             
-            objectViews.append(view)
+            maskViews.append(view)
             self.view.addSubview(view)
         }
     }
