@@ -23,5 +23,6 @@
 
 - Object 檢測是使用 Apple Inc. 訓練好的 YOLOv3-Tiny mlmodel 檔案（ [下載網址](https://developer.apple.com/machine-learning/models/) ）。
 - 我使用的是 16 bit 精度的 YOLOv3TinyFP16.mlmodel，如果你想要有更精確的檢測結果，可自行把 model 換成 32 bit 精度的 YOLOv3Tiny.mlmodel；或是你想要有更快的檢測速度，那就把 model 換成 8 bit 的 YOLOv3TinyInt8LUT.mlmodel。
+- Apple Inc. 提供的 [Core ML Models](https://developer.apple.com/machine-learning/models/) 裡也有 YOLOv3，YOLOv3 比起 YOLOv3-Tiny 有更精確的檢測效果，但速度會較慢，如果你需要更精確的 Object 檢測，可嘗試把 mlmodel 檔案換成 YOLOv3。
 
 
